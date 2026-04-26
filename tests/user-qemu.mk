@@ -165,6 +165,11 @@ tests/module-%: $(srcdir)/tests/test-%.c $(SRC_TESTLIB) $(MACH_TESTINSTALL)
 	$(USER_CC) $(USER_CFLAGS) $(TESTCFLAGS) $< $(SRC_TESTLIB) -o $@
 
 #
+# Avoid removal of module-% files after building the ISO file
+#
+.PRECIOUS: tests/module-%
+
+#
 # packaging of qemu bootable image and test runner
 #
 
