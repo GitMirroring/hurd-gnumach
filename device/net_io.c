@@ -1854,7 +1854,12 @@ bpf_do_filter(
 			continue;
 
 		case BPF_ALU|BPF_NEG:
-			A = -A;
+			/*
+			 * Most BPF arithmetic is unsigned, but negation
+			 * can't be unsigned; throw some casts to
+			 * specify what we're trying to do.
+			 */
+			A = (uint32_t)(-(int32_t)A);
 			continue;
 
 		case BPF_MISC|BPF_TAX:
