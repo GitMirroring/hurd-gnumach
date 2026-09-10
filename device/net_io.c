@@ -1864,11 +1864,11 @@ bpf_do_filter(
 			continue;
 
 		case BPF_ALU|BPF_LSH|BPF_K:
-			A <<= pc->k;
+			A = (pc->k < 32) ? A << pc->k : 0;
 			continue;
 
 		case BPF_ALU|BPF_RSH|BPF_K:
-			A >>= pc->k;
+			A = (pc->k < 32) ? A >> pc->k : 0;
 			continue;
 
 		case BPF_ALU|BPF_NEG:
@@ -1953,6 +1953,12 @@ bpf_validate(
 		 */
 		if ((p->code == (BPF_ALU|BPF_DIV|BPF_K)
 		  || p->code == (BPF_ALU|BPF_MOD|BPF_K)) && p->k == 0) {
+			return 0;
+		}
+		/*
+		 * Check for undefined behavior.
+		 */
+		if ((p->code == (BPF_ALU|BPF_LSH|BPF_K)) && p->k >= 32) {
 			return 0;
 		}
 		/*
