@@ -1787,12 +1787,22 @@ bpf_do_filter(
 			A /= X;
 			continue;
 			
+		case BPF_ALU|BPF_MOD|BPF_X:
+			if (X == 0)
+				return 0;
+			A %= X;
+			continue;
+
 		case BPF_ALU|BPF_AND|BPF_X:
 			A &= X;
 			continue;
 			
 		case BPF_ALU|BPF_OR|BPF_X:
 			A |= X;
+			continue;
+
+		case BPF_ALU|BPF_XOR|BPF_X:
+			A ^= X;
 			continue;
 
 		case BPF_ALU|BPF_LSH|BPF_X:
@@ -1818,13 +1828,21 @@ bpf_do_filter(
 		case BPF_ALU|BPF_DIV|BPF_K:
 			A /= pc->k;
 			continue;
-			
+
+		case BPF_ALU|BPF_MOD|BPF_K:
+			A %= pc->k;
+			continue;
+
 		case BPF_ALU|BPF_AND|BPF_K:
 			A &= pc->k;
 			continue;
 			
 		case BPF_ALU|BPF_OR|BPF_K:
 			A |= pc->k;
+			continue;
+
+		case BPF_ALU|BPF_XOR|BPF_K:
+			A ^= pc->k;
 			continue;
 
 		case BPF_ALU|BPF_LSH|BPF_K:
@@ -1907,8 +1925,10 @@ bpf_validate(
 		/*
 		 * Check for constant division by 0.
 		 */
-		if (p->code == (BPF_ALU|BPF_DIV|BPF_K) && p->k == 0)
+		if ((p->code == (BPF_ALU|BPF_DIV|BPF_K)
+		  || p->code == (BPF_ALU|BPF_MOD|BPF_K)) && p->k == 0) {
 			return 0;
+		}
 		/*
 		 * Check for match instruction.
 		 * Only one match instruction per filter is allowed.
