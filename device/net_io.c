@@ -1579,7 +1579,7 @@ bpf_do_filter(
 
 	unsigned int A, X;
 	int k;
-	unsigned int mem[BPF_MEMWORDS];
+	unsigned int mem[BPF_MEMWORDS] = {0};
 
 	/* Generic pointer to either HEADER or P according to the specified offset. */
 	char *data = NULL;
