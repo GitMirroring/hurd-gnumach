@@ -1806,11 +1806,17 @@ bpf_do_filter(
 			continue;
 
 		case BPF_ALU|BPF_LSH|BPF_X:
-			A <<= X;
+			if (X < 32)
+				A <<= X;
+			else
+				A = 0;
 			continue;
 
 		case BPF_ALU|BPF_RSH|BPF_X:
-			A >>= X;
+			if (X < 32)
+				A >>= X;
+			else
+				A = 0;
 			continue;
 
 		case BPF_ALU|BPF_ADD|BPF_K:
