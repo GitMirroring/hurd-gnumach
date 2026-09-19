@@ -77,7 +77,7 @@ struct net_status {
 /*
  * Input packet filter definition
  */
-#define	NET_MAX_FILTER		128 /* was 64, bpf programs are big */
+#define	NET_MAX_FILTER		512 /* bpf programs are big */
 #define	NET_FILTER_STACK_DEPTH	32
 
 /*
