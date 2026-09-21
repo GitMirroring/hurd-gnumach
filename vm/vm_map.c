@@ -1814,6 +1814,9 @@ kern_return_t vm_map_protect(
 	if (vm_map_coalesce_entry(map, current))
 		current = next;
 
+	if (!vm_map_lookup_entry(map, start, &entry))
+		entry = entry->vme_next;
+
 	/* Returns with the map read-locked if successful */
 	vm_map_pageable_scan(map, entry, end);
 
