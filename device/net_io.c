@@ -1110,12 +1110,15 @@ net_set_filter(
      * Check the filter syntax.
      */
 
+    /* Reject filters which are zero or overflow */
+    if (filter_count == 0 || filter_count > NET_MAX_FILTER) {
+	return (D_INVALID_OPERATION);
+    }
+
     filter_bytes = CSPF_BYTES(filter_count);
     match = (bpf_insn_t) 0;
 
-    if (filter_count == 0) {
-	return (D_INVALID_OPERATION);
-    } else if (!((filter[0] & NETF_IN) || (filter[0] & NETF_OUT))) {
+    if (!((filter[0] & NETF_IN) || (filter[0] & NETF_OUT))) {
 	return (D_INVALID_OPERATION); /* NETF_IN or NETF_OUT required */
     } else if ((filter[0] & NETF_TYPE_MASK) == NETF_BPF) {
 	ret = bpf_validate((bpf_insn_t)filter, filter_bytes, &match);
@@ -2177,4 +2180,3 @@ net_free_dead_entp(queue_entry_t dead_entp)
 		kmem_cache_free(&net_hash_entry_cache, (vm_offset_t) entp);
 	}
 }
-
