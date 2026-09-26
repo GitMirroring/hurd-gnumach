@@ -690,12 +690,17 @@ biosmem_bootstrap_common(void)
         boot_panic(biosmem_panic_noseg_msg);
 
 #if !defined(MACH_HYP) && NCPUS > 1
+    phys_addr_t avail_start, avail_end;
     /*
      * Grab an early page for AP boot code which needs to be below 1MB.
      */
-    assert (phys_start < 0x100000);
-    apboot_addr = phys_start;
-    phys_start += PAGE_SIZE;
+    if (biosmem_find_avail(phys_start, phys_end, &avail_start, &avail_end)
+	|| ((avail_end - avail_start) < PAGE_SIZE)
+	|| (avail_start >= 0x100000))
+      panic("No memory for AP boot code.\n");
+
+    apboot_addr = avail_start;
+    biosmem_register_boot_data(apboot_addr, apboot_addr + PAGE_SIZE, FALSE);
 #endif
 
     biosmem_set_segment(VM_PAGE_SEG_DMA, phys_start, phys_end);
