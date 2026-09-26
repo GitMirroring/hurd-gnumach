@@ -63,6 +63,10 @@ extern void machine_relax (void);
 /*
  * C boot entrypoint - called by boot_entry in boothdr.S.
  */
+#ifdef MACH_XEN
 extern void c_boot_entry(vm_offset_t bi);
+#else
+extern void c_boot_entry(vm_offset_t bi, uint32_t magic);
+#endif
 
 #endif /* _I386AT_MODEL_DEP_H_ */

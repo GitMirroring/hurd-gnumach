@@ -517,7 +517,11 @@ i386at_init(void)
  *	C boot entrypoint - called by boot_entry in boothdr.S.
  *	Running in flat mode, but without paging yet.
  */
+#ifdef MACH_XEN
 void c_boot_entry(vm_offset_t bi)
+#else
+void c_boot_entry(vm_offset_t bi, uint32_t magic)
+#endif
 {
 #if	ENABLE_IMMEDIATE_CONSOLE
 	romputc = immc_romputc;

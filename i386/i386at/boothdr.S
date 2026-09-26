@@ -55,6 +55,9 @@ boot_hdr:
         .long	MULTIBOOT_VIDEO_PARAM_NO_PREFERENCE
 
 boot_entry:
+	/* Save the multiboot magic value for later.*/
+	movl    %eax,%edx
+
 	movl	$percpu_array - KERNELBASE, %eax
 	movw	%ax, boot_percpu_low - KERNELBASE
 	shr	$16, %eax
@@ -83,6 +86,7 @@ boot_entry:
 	andl	$0xfffffff0,%esp
 
 #ifdef APIC
+	pushl   %edx
 	/* Enable local apic in xAPIC mode */
 	xorl	%eax, %eax
 	xorl	%edx, %edx
@@ -93,6 +97,7 @@ boot_entry:
 	andl	$(~APIC_MSR_X2APIC), %eax
 	movl	$APIC_MSR, %ecx
 	wrmsr
+	popl    %edx
 #endif
 
 	/* Reset EFLAGS to a known state.  */
@@ -107,8 +112,9 @@ boot_entry:
 	rep
 	stosb
 
-	/* Push the boot_info pointer to be the second argument.  */
-	pushl	%ebx
+	/* Push the boot_info pointer and magic arguments. */
+	pushl   %edx /* magic */
+	pushl	%ebx /* multi boot pointer physical address */
 
 	/* Fix ifunc entries */
 	movl    $__rel_iplt_start,%esi

@@ -55,6 +55,8 @@ boot_hdr:
 	.global _start
 _start:
 boot_entry:
+	/* save multiboot magic for later */
+	movl    %eax, %edi
 #ifdef APIC
 	/* Enable local apic in xAPIC mode */
 	xorl	%eax, %eax
@@ -203,6 +205,7 @@ boot_entry64:
 	popf
 	/* save multiboot info for later */
 	movq	%rbx,%r8
+	movq    %rdi,%r12
 
 	/* Fix ifunc entries */
 	movq	$__rela_iplt_start,%rsi
@@ -223,6 +226,7 @@ iplt_done:
 
 	/* restore multiboot info */
 	movq	%r8,%rdi
+	movq    %r12,%rsi
 	/* Jump into C code.  */
 	call	EXT(c_boot_entry)
 	/* not reached */
