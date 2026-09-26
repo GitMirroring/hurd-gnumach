@@ -132,7 +132,11 @@ struct multiboot32_module
  * Versions used by the biosmem module.
  */
 
+#ifdef MACH_KERNEL
 #include <kern/macros.h>
+#else
+#define __packed __attribute__((packed))
+#endif
 
 /*
  * Magic number provided by the OS to the boot loader.
