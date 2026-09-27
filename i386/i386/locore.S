@@ -1234,7 +1234,9 @@ ENTRY(discover_x86_cpu_type)
 	/* We are a modern enough processor to have the CPUID instruction;
 	   use it to find out what we are. */
 0:	movl	$1,%eax			/* Fetch CPU type info ... */
+	pushl	%ebx			/* Preserve to comply with ABI */
 	cpuid				/*  ... into eax */
+	popl	%ebx
 	movl	%ecx,cpu_features_ecx	/* Keep a copy */
 	movl	%edx,cpu_features_edx	/* Keep a copy */
 	shrl	$8,%eax			/* Slide family bits down */
