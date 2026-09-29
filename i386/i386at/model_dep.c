@@ -384,7 +384,48 @@ register_mb1_boot_data(const struct multiboot_raw_info *mbi)
 static void
 register_mb2_boot_data(const struct multiboot2_raw_info *mb2_info)
 {
-  panic("Multiboot2 not implemented yet");
+  uint32_t tags_len = mb2_info->total_size;
+  uint32_t offset = 0;
+
+  /* Temporarily preserve the multiboot2 information structure. */
+  const phys_addr_t mb2_phys = _kvtophys(mb2_info);
+  biosmem_register_boot_data(mb2_phys, mb2_phys + tags_len, TRUE);
+
+  tags_len -= offsetof(struct multiboot2_raw_info, content);
+
+  while (offset < tags_len)
+    {
+      const struct multiboot2_tag *tag =
+	(const struct multiboot2_tag *)(&mb2_info->content[offset]);
+
+      switch (tag->type)
+	{
+	case MULTIBOOT2_TAG_TYPE_ELF_SECTIONS:
+	  {
+	    const struct multiboot2_tag_elf_sections *elf_tag =
+	      (const struct multiboot2_tag_elf_sections *)tag;
+
+	    register_elf_shdrs_boot_data(&elf_tag->sections,
+					 elf_tag->num,
+					 elf_tag->entsize);
+	  }
+	  break;
+
+	case MULTIBOOT2_TAG_TYPE_MODULE:
+	  {
+	    const struct multiboot2_tag_module *mod_tag =
+	      (const struct multiboot2_tag_module *)tag;
+
+	    biosmem_register_boot_data(mod_tag->mod_start, mod_tag->mod_end, TRUE);
+	  }
+	  break;
+
+	default:
+	  break;
+	}
+
+      offset += MULTIBOOT2_NEXT_TAG_OFFSET(tag->size);
+    }
 }
 
 static void
