@@ -816,7 +816,76 @@ biosmem_mb1_bootstrap(const struct multiboot_raw_info *mbi)
 void __boot
 biosmem_mb2_bootstrap(const struct multiboot2_raw_info* mbi)
 {
-  panic("Multiboot2 not implemented yet");
+  const struct multiboot2_tag_basic_meminfo *bi_tag = NULL;
+  uint32_t tags_len = mbi->total_size;
+  uint32_t offset = 0;
+
+  tags_len -= offsetof(struct multiboot2_raw_info, content);
+
+  biosmem_map_size = 0;
+
+  while (offset < tags_len)
+    {
+      struct multiboot2_tag *tag =
+	(struct multiboot2_tag *)(mbi->content + offset);
+
+      switch (tag->type)
+	{
+	case MULTIBOOT2_TAG_TYPE_MMAP:
+	  {
+	    const struct multiboot2_tag_mmap *mmap_tag =
+	      (const struct multiboot2_tag_mmap *)tag;
+
+	    const uint8_t* entries = (const uint8_t*)mmap_tag->entries;
+	    uint32_t entries_len = mmap_tag->size
+	      - offsetof(struct multiboot2_tag_mmap, entries);
+
+	    struct biosmem_map_entry *bm_start, *bm_entry, *bm_end;
+	    bm_start = biosmem_map;
+	    bm_entry = bm_start;
+	    bm_end = bm_entry + BIOSMEM_MAX_MAP_SIZE;
+
+	    while (entries_len >= mmap_tag->entry_size &&
+		   bm_entry < bm_end)
+	      {
+		const multiboot2_memory_map_t *mb_entry =
+		  (const multiboot2_memory_map_t *)entries;
+
+		bm_entry->base_addr = mb_entry->addr;
+		bm_entry->length = mb_entry->len;
+		bm_entry->type = mb_entry->type;
+		entries += mmap_tag->entry_size;
+		entries_len -= mmap_tag->entry_size;
+
+		biosmem_map_adjust_alignment(bm_entry);
+		bm_entry++;
+	      }
+
+	    biosmem_map_size = bm_entry - bm_start;
+	  }
+	  break;
+
+	case MULTIBOOT2_TAG_TYPE_BASIC_MEMINFO:
+	  {
+	    bi_tag = (const struct multiboot2_tag_basic_meminfo *)tag;
+	  }
+	  break;
+
+	default:
+	  break;
+	}
+
+      offset += MULTIBOOT2_NEXT_TAG_OFFSET(tag->size);
+    }
+
+  if (bi_tag == NULL)
+    panic("No basic memory information configuration");
+
+  if (biosmem_map_size == 0)
+    biosmem_map_build_simple(bi_tag->mem_lower, bi_tag->mem_upper);
+
+  biosmem_bootstrap_common();
+  biosmem_setup_allocator(bi_tag->mem_upper);
 }
 
 #endif /* MACH_HYP */
