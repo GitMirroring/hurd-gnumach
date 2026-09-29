@@ -19,6 +19,14 @@
  *  IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/*  Content taken from 'grub' sources but with minor alterations for
+ *  the gnumach build environment. These include:
+ *
+ *  1) Conversion of their MULTBOOT_ prefixes to MULTIBOOT2_
+ *  2) Use of the 'packed' attribute for struct declarations
+ *  3) Custom macros for Mach (eg. MULTIBOOT2_NEXT_TAG_OFFSET)
+ */
+
 #ifndef _MACH_I386_MULTIBOOT2_H_
 #define _MACH_I386_MULTIBOOT2_H_ 1
 
