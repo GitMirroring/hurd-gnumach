@@ -475,10 +475,186 @@ finalise_mb1_boot_info(void)
 	}
 }
 
+static const char* const mb2_alloc_mem_failed =
+  "Cannot allocate memory for multiboot2 conversion\n";
+
+/* Rebuild multiboot1 'boot_info' from the multiboot2 data structure. */
 static void
 finalise_mb2_boot_info(const struct multiboot2_raw_info *mb2_info)
 {
-  panic("Multiboot2 not implemented yet");
+  const uint32_t tags_len =
+    (mb2_info->total_size - offsetof(struct multiboot2_raw_info, content));
+  uint32_t mod_count = 0;
+  uint32_t offset = 0;
+
+  boot_info.flags = 0;
+
+  while (offset < tags_len)
+    {
+      const struct multiboot2_tag *tag =
+	(const struct multiboot2_tag *)&mb2_info->content[offset];
+
+      if (tag->type == MULTIBOOT2_TAG_TYPE_MODULE)
+	mod_count++;
+
+      offset += MULTIBOOT2_NEXT_TAG_OFFSET(tag->size);
+    }
+
+  if (mod_count)
+    {
+      size_t mod_sz = (mod_count * sizeof(struct multiboot_raw_module));
+      vm_offset_t addr;
+
+      if (! init_alloc_aligned(round_page(mod_sz), &addr))
+	panic(mb2_alloc_mem_failed);
+
+      boot_info.mods_addr = addr;
+      boot_info.flags |= MULTIBOOT_MODS;
+    }
+
+  /* Initialise to zero in all cases and increment below as each
+     module is added. */
+  boot_info.mods_count = 0;
+
+  offset = 0;
+
+  while (offset < tags_len)
+    {
+      const struct multiboot2_tag *tag =
+	(const struct multiboot2_tag *)&mb2_info->content[offset];
+
+      switch (tag->type)
+	{
+	case MULTIBOOT2_TAG_TYPE_MMAP:
+	  {
+	    const struct multiboot2_tag_mmap *mmap_tag =
+	      (const struct multiboot2_tag_mmap *)tag;
+
+	    const uint8_t *mb2_entries =  (const uint8_t *)mmap_tag->entries;
+	    const uint8_t *mb2_entries_end =
+	      mb2_entries + tag->size - offsetof(struct multiboot2_tag_mmap, entries);
+	    size_t buf_sz = ((mb2_entries_end - mb2_entries)
+			     / mmap_tag->entry_size
+			     * sizeof(struct multiboot_raw_mmap_entry));
+	    vm_offset_t addr;
+
+	    if (! init_alloc_aligned(round_page(buf_sz), &addr))
+	      panic(mb2_alloc_mem_failed);
+
+	    struct multiboot_raw_mmap_entry* mb1_entry =
+	      (struct multiboot_raw_mmap_entry *)phystokv(addr);
+
+	    while (mb2_entries < mb2_entries_end)
+	      {
+		const multiboot2_memory_map_t *mb2_entry =
+		  (const multiboot2_memory_map_t *)mb2_entries;
+
+		mb1_entry->size = (sizeof(*mb1_entry) - sizeof(mb1_entry->size));
+		mb1_entry->base_addr = mb2_entry->addr;
+		mb1_entry->length = mb2_entry->len;
+		mb1_entry->type = mb2_entry->type;
+
+		mb2_entries += mmap_tag->entry_size;
+		mb1_entry++;
+	      }
+
+	    boot_info.mmap_addr = addr;
+	    boot_info.mmap_length = buf_sz;
+	    boot_info.flags |= MULTIBOOT_MEM_MAP;
+	  }
+	  break;
+
+	case MULTIBOOT2_TAG_TYPE_BASIC_MEMINFO:
+	  {
+	    const struct multiboot2_tag_basic_meminfo *bi_tag =
+	      (const struct multiboot2_tag_basic_meminfo *)tag;
+
+	    boot_info.mem_lower = bi_tag->mem_lower;
+	    boot_info.mem_upper = bi_tag->mem_upper;
+	    boot_info.flags |= MULTIBOOT_MEMORY;
+	  }
+	  break;
+
+	case MULTIBOOT2_TAG_TYPE_CMDLINE:
+	  {
+	    const struct multiboot2_tag_string *cl_tag =
+	      (const struct multiboot2_tag_string *)tag;
+
+	    const size_t cl_sz = (cl_tag->size - sizeof(struct multiboot2_tag));
+	    vm_offset_t addr;
+
+	    if (! init_alloc_aligned(round_page(cl_sz), &addr))
+	      panic(mb2_alloc_mem_failed);
+
+	    memcpy((void*)phystokv(addr), cl_tag->string, cl_sz);
+	    boot_info.cmdline = addr;
+	    boot_info.flags |= MULTIBOOT_CMDLINE;
+	  }
+	  break;
+
+	case MULTIBOOT2_TAG_TYPE_ELF_SECTIONS:
+	  {
+	    const struct multiboot2_tag_elf_sections *elf_tag =
+	      (const struct multiboot2_tag_elf_sections *)tag;
+
+	    const size_t sections_sz =
+	      (elf_tag->size
+	       - offsetof(struct multiboot2_tag_elf_sections, sections));
+	    vm_offset_t addr;
+
+	    if (! init_alloc_aligned(round_page(sections_sz), &addr))
+	      panic(mb2_alloc_mem_failed);
+
+	    memcpy((void*)phystokv(addr), elf_tag->sections, sections_sz);
+	    boot_info.shdr_num = elf_tag->num;
+	    boot_info.shdr_size = elf_tag->entsize;
+	    boot_info.shdr_addr = addr;
+	    boot_info.shdr_strndx = elf_tag->shndx;
+	    boot_info.flags |= MULTIBOOT_ELF_SHDR;
+	  }
+	  break;
+
+	case MULTIBOOT2_TAG_TYPE_MODULE:
+	  {
+	    const struct multiboot2_tag_module *mod_tag =
+	      (const struct multiboot2_tag_module *)tag;
+
+	    struct multiboot_raw_module * module =
+	      (struct multiboot_raw_module *)phystokv(boot_info.mods_addr) +
+	      boot_info.mods_count;
+
+	    vm_offset_t addr;
+	    vm_size_t mod_sz = (mod_tag->mod_end - mod_tag->mod_start);
+	    if (! init_alloc_aligned(round_page(mod_sz), &addr))
+	      panic(mb2_alloc_mem_failed);
+	    memcpy((void*) phystokv(addr), (void*) phystokv(mod_tag->mod_start), mod_sz);
+	    module->mod_start = addr;
+	    module->mod_end = (addr + mod_sz);
+
+	    size_t cl_sz = (mod_tag->size - offsetof(struct multiboot2_tag_module, cmdline));
+
+	    if (! init_alloc_aligned(round_page(cl_sz), &addr))
+	      panic(mb2_alloc_mem_failed);
+
+	    memcpy((void*)phystokv(addr), &mod_tag->cmdline, cl_sz);
+	    module->string = addr;
+
+	    boot_info.flags |= MULTIBOOT_MODS;
+	    boot_info.mods_count++;
+	  }
+	  break;
+
+	default:
+	  break;
+	}
+
+      offset += MULTIBOOT2_NEXT_TAG_OFFSET(tag->size);
+    }
+
+  if (boot_info.flags & MULTIBOOT_CMDLINE)
+    kernel_cmdline = (char*)phystokv(boot_info.cmdline);
+
+  mbinfo_register_boot_data(&boot_info);
 }
 
 #endif /* MACH_HYP */
