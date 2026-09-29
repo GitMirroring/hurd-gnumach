@@ -314,10 +314,29 @@ void db_reset_cpu(void)
 #ifndef	MACH_HYP
 
 static void
+register_elf_shdrs_boot_data(const void *shdrs_addr,
+			     uint32_t shdr_num,
+			     uint32_t shdr_size)
+{
+	for (unsigned int i = 0; i < shdr_num; i++)
+	  {
+	    struct elf_shdr *shdr;
+
+	    shdr = (struct elf_shdr *)(shdrs_addr + (i * shdr_size));
+
+	    if ((shdr->type != ELF_SHT_SYMTAB)
+		&& (shdr->type != ELF_SHT_STRTAB))
+	      continue;
+
+	    if (shdr->size != 0)
+	      biosmem_register_boot_data(shdr->addr, shdr->addr + shdr->size, FALSE);
+	  }
+}
+
+static void
 register_mb1_boot_data(const struct multiboot_raw_info *mbi)
 {
 	struct multiboot_raw_module *mod;
-	struct elf_shdr *shdr;
 	unsigned long tmp;
 	unsigned int i;
 
@@ -356,16 +375,7 @@ register_mb1_boot_data(const struct multiboot_raw_info *mbi)
 
 		tmp = phystokv(mbi->shdr_addr);
 
-		for (i = 0; i < mbi->shdr_num; i++) {
-			shdr = (struct elf_shdr *)(tmp + (i * mbi->shdr_size));
-
-			if ((shdr->type != ELF_SHT_SYMTAB)
-			    && (shdr->type != ELF_SHT_STRTAB))
-				continue;
-
-			if (shdr->size != 0)
-				biosmem_register_boot_data(shdr->addr, shdr->addr + shdr->size, FALSE);
-		}
+		register_elf_shdrs_boot_data((const void*)tmp, mbi->shdr_num, mbi->shdr_size);
 	}
 
 	mbinfo_register_boot_data(mbi);
