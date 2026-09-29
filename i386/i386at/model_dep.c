@@ -377,58 +377,9 @@ register_mb2_boot_data(const struct multiboot2_raw_info *mb2_info)
   panic("Multiboot2 not implemented yet");
 }
 
-#endif /* MACH_HYP */
-
-/*
- * Basic PC VM initialization.
- * Turns on paging and changes the kernel segments to use high linear addresses.
- *
- * mb2_info is the multiboot2 information structure supplied by the
- * boot loader. If this is NULL then either multiboot1 or Xen boot is
- * in effect and the global 'boot_info' supplies the boot information
- * instead.
- */
 static void
-i386at_init(const struct multiboot2_raw_info *mb2_info)
+finalise_mb1_boot_info(void)
 {
-	/*
-	 * Initialize the PIC prior to any possible call to an spl.
-	 */
-#ifndef	MACH_HYP
-# ifdef APIC
-	picdisable();
-# else
-	picinit();
-# endif
-#else	/* MACH_HYP */
-	hyp_intrinit();
-#endif	/* MACH_HYP */
-
-	/*
-	 * Read memory map and load it into the physical page allocator.
-	 */
-#ifdef MACH_HYP
-	biosmem_xen_bootstrap();
-#else /* MACH_HYP */
-	extern char _start[], _end[];
-
-	biosmem_register_boot_data(_kvtophys(&_start), _kvtophys(&_end), FALSE);
-
-	if (mb2_info == NULL)
-	  {
-	    register_mb1_boot_data(&boot_info);
-	    biosmem_mb1_bootstrap(&boot_info);
-	  }
-	else
-	  {
-	    register_mb2_boot_data(mb2_info);
-	    biosmem_mb2_bootstrap(mb2_info);
-	  }
-#endif /* MACH_HYP */
-
-#ifdef MACH_XEN
-	kernel_cmdline = (char*) boot_info.cmd_line;
-#else	/* MACH_XEN */
 	vm_offset_t addr;
 
 	/* Copy content pointed by boot_info before losing access to it when it
@@ -471,7 +422,65 @@ i386at_init(const struct multiboot2_raw_info *mb2_info)
 			m[i].string = addr;
 		}
 	}
-#endif	/* MACH_XEN */
+}
+
+static void
+finalise_mb2_boot_info(const struct multiboot2_raw_info *mb2_info)
+{
+  panic("Multiboot2 not implemented yet");
+}
+
+#endif /* MACH_HYP */
+
+/*
+ * Basic PC VM initialization.
+ * Turns on paging and changes the kernel segments to use high linear addresses.
+ *
+ * mb2_info is the multiboot2 information structure supplied by the
+ * boot loader. If this is NULL then either multiboot1 or Xen boot is
+ * in effect and the global 'boot_info' supplies the boot information
+ * instead.
+ */
+static void
+i386at_init(const struct multiboot2_raw_info *mb2_info)
+{
+	/*
+	 * Initialize the PIC prior to any possible call to an spl.
+	 */
+#ifndef	MACH_HYP
+# ifdef APIC
+	picdisable();
+# else
+	picinit();
+# endif
+#else	/* MACH_HYP */
+	hyp_intrinit();
+#endif	/* MACH_HYP */
+
+	/*
+	 * Read memory map and load it into the physical page allocator.
+	 */
+#ifdef MACH_XEN
+	biosmem_xen_bootstrap();
+	kernel_cmdline = (char*) boot_info.cmd_line;
+#else /* MACH_XEN */
+	extern char _start[], _end[];
+
+	biosmem_register_boot_data(_kvtophys(&_start), _kvtophys(&_end), FALSE);
+
+	if (mb2_info == NULL)
+	  {
+	    register_mb1_boot_data(&boot_info);
+	    biosmem_mb1_bootstrap(&boot_info);
+	    finalise_mb1_boot_info();
+	  }
+	else
+	  {
+	    register_mb2_boot_data(mb2_info);
+	    biosmem_mb2_bootstrap(mb2_info);
+	    finalise_mb2_boot_info(mb2_info);
+	  }
+#endif /* MACH_XEN */
 
 	/*
 	 *	Initialize kernel physical map, mapping the
