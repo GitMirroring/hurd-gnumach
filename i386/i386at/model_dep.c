@@ -41,6 +41,7 @@
 #include <mach/vm_prot.h>
 #include <mach/machine.h>
 #include <mach/machine/multiboot.h>
+#include <mach/machine/multiboot2.h>
 #include <mach/xen.h>
 
 #include <kern/assert.h>
@@ -311,16 +312,12 @@ void db_reset_cpu(void)
 #ifndef	MACH_HYP
 
 static void
-register_boot_data(const struct multiboot_raw_info *mbi)
+register_mb1_boot_data(const struct multiboot_raw_info *mbi)
 {
 	struct multiboot_raw_module *mod;
 	struct elf_shdr *shdr;
 	unsigned long tmp;
 	unsigned int i;
-
-	extern char _start[], _end[];
-
-	biosmem_register_boot_data(_kvtophys(&_start), _kvtophys(&_end), FALSE);
 
 	/* cmdline and modules are moved to a safe place by i386at_init.  */
 
@@ -372,14 +369,25 @@ register_boot_data(const struct multiboot_raw_info *mbi)
 	mbinfo_register_boot_data(mbi);
 }
 
+static void
+register_mb2_boot_data(const struct multiboot2_raw_info *mb2_info)
+{
+  panic("Multiboot2 not implemented yet");
+}
+
 #endif /* MACH_HYP */
 
 /*
  * Basic PC VM initialization.
  * Turns on paging and changes the kernel segments to use high linear addresses.
+ *
+ * mb2_info is the multiboot2 information structure supplied by the
+ * boot loader. If this is NULL then either multiboot1 or Xen boot is
+ * in effect and the global 'boot_info' supplies the boot information
+ * instead.
  */
 static void
-i386at_init(void)
+i386at_init(const struct multiboot2_raw_info *mb2_info)
 {
 	/*
 	 * Initialize the PIC prior to any possible call to an spl.
@@ -400,7 +408,15 @@ i386at_init(void)
 #ifdef MACH_HYP
 	biosmem_xen_bootstrap();
 #else /* MACH_HYP */
-	register_boot_data((struct multiboot_raw_info *) &boot_info);
+	extern char _start[], _end[];
+
+	biosmem_register_boot_data(_kvtophys(&_start), _kvtophys(&_end), FALSE);
+
+	if (mb2_info == NULL)
+	  register_mb1_boot_data(&boot_info);
+	else
+	  register_mb2_boot_data(mb2_info);
+
 	biosmem_bootstrap((struct multiboot_raw_info *) &boot_info);
 #endif /* MACH_HYP */
 
@@ -523,12 +539,35 @@ void c_boot_entry(vm_offset_t bi)
 void c_boot_entry(vm_offset_t bi, uint32_t magic)
 #endif
 {
+	const struct multiboot2_raw_info *mb2_info = NULL;
+
 #if	ENABLE_IMMEDIATE_CONSOLE
 	romputc = immc_romputc;
 #endif	/* ENABLE_IMMEDIATE_CONSOLE */
 
-	/* Stash the boot_image_info pointer.  */
-	boot_info = *(typeof(boot_info)*)phystokv(bi);
+#ifndef MACH_XEN
+	if (magic == MULTIBOOT2_BOOTLOADER_MAGIC)
+	  {
+	    /* Mach exposes a copy of 'boot_info' via the "mbinfo"
+	       device. A simple method of maintaining that interface
+	       is to translate 'mb2_info' into 'boot_info' and capture
+	       any multiboot2 specific information (eg. EFI)
+	       separately. Thereafter 'mb2_info' can be
+	       discarded. This translation cannot happen until after
+	       memory bootstrapping which means that we cannot
+	       immediately use 'boot_info'. */
+	    mb2_info = (const struct multiboot2_raw_info *)phystokv(bi);
+	  }
+	else if (magic != MULTIBOOT_LOADER_MAGIC)
+	  {
+	    panic("Invalid multiboot magic ");
+	  }
+	else
+#endif
+	  /* Stash the boot_image_info pointer for the XEN and
+	     multiboot1 cases. */
+	  boot_info = *(typeof(boot_info)*)phystokv(bi);
+
 	int cpu_type;
 
 	/* Before we do _anything_ else, print the hello message.
@@ -570,7 +609,7 @@ void c_boot_entry(vm_offset_t bi, uint32_t magic)
 	/*
 	 * Do basic VM initialization
 	 */
-	i386at_init();
+	i386at_init(mb2_info);
 
 #if	MACH_KDB
 	/*
