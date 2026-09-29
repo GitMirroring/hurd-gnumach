@@ -415,11 +415,15 @@ i386at_init(const struct multiboot2_raw_info *mb2_info)
 	biosmem_register_boot_data(_kvtophys(&_start), _kvtophys(&_end), FALSE);
 
 	if (mb2_info == NULL)
-	  register_mb1_boot_data(&boot_info);
+	  {
+	    register_mb1_boot_data(&boot_info);
+	    biosmem_mb1_bootstrap(&boot_info);
+	  }
 	else
-	  register_mb2_boot_data(mb2_info);
-
-	biosmem_bootstrap((struct multiboot_raw_info *) &boot_info);
+	  {
+	    register_mb2_boot_data(mb2_info);
+	    biosmem_mb2_bootstrap(mb2_info);
+	  }
 #endif /* MACH_HYP */
 
 #ifdef MACH_XEN

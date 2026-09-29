@@ -301,19 +301,19 @@ biosmem_map_build(const struct multiboot_raw_info *mbi)
 }
 
 static void __boot
-biosmem_map_build_simple(const struct multiboot_raw_info *mbi)
+biosmem_map_build_simple(const uint32_t mem_lower, const uint32_t mem_upper)
 {
     struct biosmem_map_entry *entry;
 
     entry = biosmem_map;
     entry->base_addr = 0;
-    entry->length = mbi->mem_lower << 10;
+    entry->length = mem_lower << 10;
     entry->type = BIOSMEM_TYPE_AVAILABLE;
     biosmem_map_adjust_alignment(entry);
 
     entry++;
     entry->base_addr = BIOSMEM_END;
-    entry->length = mbi->mem_upper << 10;
+    entry->length = mem_upper << 10;
     entry->type = BIOSMEM_TYPE_AVAILABLE;
     biosmem_map_adjust_alignment(entry);
 
@@ -625,7 +625,7 @@ biosmem_find_avail(phys_addr_t start, phys_addr_t end,
 #ifndef MACH_HYP
 
 static void __boot
-biosmem_setup_allocator(const struct multiboot_raw_info *mbi)
+biosmem_setup_allocator(const uint32_t mem_upper)
 {
     phys_addr_t heap_start, heap_end, max_heap_start, max_heap_end;
     phys_addr_t start, end;
@@ -635,7 +635,7 @@ biosmem_setup_allocator(const struct multiboot_raw_info *mbi)
      * Find some memory for the heap. Look for the largest unused area in
      * upper memory, carefully avoiding all boot data.
      */
-    end = vm_page_trunc((mbi->mem_upper + 1024) << 10);
+    end = vm_page_trunc((mem_upper + 1024) << 10);
 
     if (end > VM_PAGE_DIRECTMAP_LIMIT)
         end = VM_PAGE_DIRECTMAP_LIMIT;
@@ -802,15 +802,21 @@ biosmem_xen_bootstrap(void)
 #else /* MACH_HYP */
 
 void __boot
-biosmem_bootstrap(const struct multiboot_raw_info *mbi)
+biosmem_mb1_bootstrap(const struct multiboot_raw_info *mbi)
 {
     if (mbi->flags & MULTIBOOT_LOADER_MMAP)
         biosmem_map_build(mbi);
     else
-        biosmem_map_build_simple(mbi);
+        biosmem_map_build_simple(mbi->mem_lower, mbi->mem_upper);
 
     biosmem_bootstrap_common();
-    biosmem_setup_allocator(mbi);
+    biosmem_setup_allocator(mbi->mem_upper);
+}
+
+void __boot
+biosmem_mb2_bootstrap(const struct multiboot2_raw_info* mbi)
+{
+  panic("Multiboot2 not implemented yet");
 }
 
 #endif /* MACH_HYP */

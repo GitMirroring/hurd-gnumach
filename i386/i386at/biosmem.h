@@ -20,6 +20,7 @@
 
 #include <mach/machine/vm_types.h>
 #include <mach/machine/multiboot.h>
+#include <mach/machine/multiboot2.h>
 
 /*
  * Address where the address of the Extended BIOS Data Area segment can be
@@ -65,7 +66,8 @@ void biosmem_register_boot_data(phys_addr_t start, phys_addr_t end,
 #ifdef MACH_HYP
 void biosmem_xen_bootstrap(void);
 #else /* MACH_HYP */
-void biosmem_bootstrap(const struct multiboot_raw_info *mbi);
+void biosmem_mb1_bootstrap(const struct multiboot_raw_info *mbi);
+void biosmem_mb2_bootstrap(const struct multiboot2_raw_info *mbi);
 #endif /* MACH_HYP */
 
 /*
