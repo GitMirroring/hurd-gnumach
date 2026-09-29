@@ -97,11 +97,13 @@
 #include <ddb/db_sym.h>
 #include <i386/db_interface.h>
 
+#ifndef MACH_XEN
 /* ELF section header */
 static unsigned elf_shdr_num;
 static vm_size_t elf_shdr_size;
 static vm_offset_t elf_shdr_addr;
 static unsigned elf_shdr_shndx;
+#endif
 
 #endif /* MACH_KDB */
 
@@ -583,13 +585,20 @@ void c_boot_entry(vm_offset_t bi, uint32_t magic)
 #ifdef MACH_PSEUDO_PHYS
 	mfn_list = (void*)boot_info.mfn_list;
 #endif
-#else	/* MACH_XEN */
+#endif	/* MACH_XEN */
 
-#if	MACH_KDB
+	cpu_type = discover_x86_cpu_type ();
+
+	/*
+	 * Do basic VM initialization
+	 */
+	i386at_init(mb2_info);
+
+	/* 'boot_info' is finalised within i386at_init() and can now
+	   be used whichever version of multiboot is in use. */
+#if	MACH_KDB && !defined(MACH_XEN)
 	/*
 	 * Locate the kernel's symbol table, if the boot loader provided it.
-	 * We need to do this before i386at_init()
-	 * so that the symbol table's memory won't be stomped on.
 	 */
 	if ((boot_info.flags & MULTIBOOT_ELF_SHDR)
 	    && boot_info.shdr_num)
@@ -600,28 +609,13 @@ void c_boot_entry(vm_offset_t bi, uint32_t magic)
 		elf_shdr_shndx = boot_info.shdr_strndx;
 
 		printf("ELF section header table at %08" PRIxPTR "\n", elf_shdr_addr);
-	}
-#endif	/* MACH_KDB */
-#endif	/* MACH_XEN */
 
-	cpu_type = discover_x86_cpu_type ();
-
-	/*
-	 * Do basic VM initialization
-	 */
-	i386at_init(mb2_info);
-
-#if	MACH_KDB
-	/*
-	 * Initialize the kernel debugger's kernel symbol table.
-	 */
-	if (elf_shdr_num)
-	{
+		/* Initialize the kernel debugger's kernel symbol table. */
 		elf_db_sym_init(elf_shdr_num,elf_shdr_size,
 				elf_shdr_addr, elf_shdr_shndx,
 				"mach", NULL);
 	}
-#endif	/* MACH_KDB */
+#endif	/* MACH_KDB && !defined(MACH_XEN) */
 
 	machine_slot[0].is_cpu = TRUE;
 	machine_slot[0].cpu_subtype = CPU_SUBTYPE_AT386;
