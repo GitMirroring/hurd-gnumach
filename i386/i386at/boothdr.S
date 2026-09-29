@@ -54,6 +54,9 @@ boot_hdr:
         .long	25
         .long	MULTIBOOT_VIDEO_PARAM_NO_PREFERENCE
 
+/* Incorporate the multiboot2 header into the boot image. */
+#include <machine/multiboot2_hdr_asm.h>
+
 boot_entry:
 	/* Save the multiboot magic value for later.*/
 	movl    %eax,%edx

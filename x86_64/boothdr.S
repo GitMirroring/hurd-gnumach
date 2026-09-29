@@ -52,6 +52,9 @@ boot_hdr:
 	*/
 	.long	- (MULTIBOOT_MAGIC+MULTIBOOT_FLAGS)
 
+/* Incorporate the multiboot2 header into the boot image. */
+#include <machine/multiboot2_hdr_asm.h>
+
 	.global _start
 _start:
 boot_entry:
