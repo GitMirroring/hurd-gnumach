@@ -697,6 +697,7 @@ i386at_init(const struct multiboot2_raw_info *mb2_info)
 # else
 	picinit();
 # endif
+	acpi_initialise (mb2_info);
 #else	/* MACH_HYP */
 	hyp_intrinit();
 #endif	/* MACH_HYP */

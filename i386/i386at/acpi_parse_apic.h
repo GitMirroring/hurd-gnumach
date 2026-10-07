@@ -200,4 +200,7 @@ void acpi_print_info(phys_addr_t rsdp, void *rsdt, int acpi_rsdt_n);
 
 extern unsigned lapic_addr;
 
+struct multiboot2_raw_info;
+void acpi_initialise (const struct multiboot2_raw_info *bi);
+
 #endif /* __ACPI_H__ */

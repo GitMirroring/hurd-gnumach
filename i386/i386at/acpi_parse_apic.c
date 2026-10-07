@@ -36,6 +36,12 @@ static struct acpi_apic *apic_madt = NULL;
 unsigned lapic_addr;
 uint32_t *hpet_addr;
 
+/* Retains a copy of the detected and validated system RSDP. */
+static struct acpi_rsdp2 acpi_rsdp_store;
+
+/* This is NULL in the case where the RSDP cannot be found. */
+static const struct acpi_rsdp2 *acpi_rsdp_verified = NULL;
+
 /*
  * acpi_print_info: shows by screen the ACPI's rsdp and rsdt virtual address
  * and the number of entries stored in RSDT table.
@@ -90,7 +96,7 @@ acpi_check_signature(const uint8_t table_signature[], const char *real_signature
 
 /*
  * acpi_check_rsdp:
- * check if the RDSP "candidate" table is the real RSDP table.
+ * check if the RSDP "candidate" table is the real RSDP table.
  *
  * Compare the table signature with the ACPI signature for this table
  * and check is the checksum is correct.
@@ -99,11 +105,11 @@ acpi_check_signature(const uint8_t table_signature[], const char *real_signature
  *
  * Preconditions: RSDP pointer must not be NULL.
  *
- * Returns 1 if ACPI 1.0 and sets sdt_base
- * Returns 2 if ACPI >= 2.0 and sets sdt_base
+ * Returns 1 if ACPI 1.0
+ * Returns 2 if ACPI >= 2.0
  */
 static int8_t
-acpi_check_rsdp(struct acpi_rsdp2 *rsdp, phys_addr_t *sdt_base)
+acpi_check_rsdp(const struct acpi_rsdp2 *rsdp)
 {
     int is_rsdp;
     uint8_t cksum;
@@ -116,7 +122,6 @@ acpi_check_rsdp(struct acpi_rsdp2 *rsdp, phys_addr_t *sdt_base)
 
     if (rsdp->v1.revision == 0) {
         // ACPI 1.0
-        *sdt_base = rsdp->v1.rsdt_addr;
         printf("ACPI v1.0\n");
         cksum = acpi_checksum((void *)(&rsdp->v1), sizeof(struct acpi_rsdp));
 
@@ -127,7 +132,6 @@ acpi_check_rsdp(struct acpi_rsdp2 *rsdp, phys_addr_t *sdt_base)
 
     } else if (rsdp->v1.revision == 2) {
         // ACPI >= 2.0
-        *sdt_base = rsdp->xsdt_addr;
         printf("ACPI >= v2.0\n");
         cksum = acpi_checksum((void *)rsdp, sizeof(struct acpi_rsdp2));
 
@@ -160,46 +164,43 @@ acpi_check_rsdp_align(void *addr)
 /*
  * acpi_search_rsdp: search the rsdp table in a memory range.
  *
- * Receives as input the initial virtual address, and the lenght
+ * Receives as input the initial virtual address, and the length
  * of memory range.
  *
  * Preconditions: The start address (addr) must be aligned.
  *
- * Returns the physical address of rsdp structure if success, 0 if failure.
+ * Returns the virtual address of rsdp structure if success, NULL if failure.
  */
-static phys_addr_t
-acpi_search_rsdp(void *addr, uint32_t length, int *is_64bit)
+static const struct acpi_rsdp2 *
+acpi_search_rsdp(const void *addr, uint32_t length)
 {
-    void *end;
-    int version = 0;
-    phys_addr_t sdt_base = 0;
+    const void *end;
 
-    /* Search RDSP in memory space between addr and addr+lenght. */
+    /* Search RSDP in memory space between addr and addr+length. */
     for (end = addr+length; addr < end; addr += ACPI_RSDP_ALIGN) {
 
-        /* Check if the current memory block stores the RDSP. */
-        if ((addr != NULL) && ((version = acpi_check_rsdp(addr, &sdt_base)) > 0)) {
-            /* If yes, return RSDT/XSDT address */
-            *is_64bit = (version == 2);
-            return sdt_base;
+        /* Check if the current memory block stores the RSDP. */
+        if ((addr != NULL) && (acpi_check_rsdp(addr) > 0)) {
+            return (const struct acpi_rsdp2 *)addr;
         }
     }
 
-    return 0;
+    return NULL;
 }
 
 /*
- * acpi_get_rsdp: tries to find the RSDP table,
+ * acpi_rsdp_from_bios: tries to find the RSDP table,
  * searching It in many memory ranges, as It's written in ACPI Specification.
  *
- * Returns the reference to RDSP structure if success, 0 if failure.
+ * Returns the virtual pointer to the RSDP structure if success, NULL
+ * if failure.
  */
-static phys_addr_t
-acpi_get_rsdp(int *is_64bit)
+static const struct acpi_rsdp2 *
+acpi_rsdp_from_bios (void)
 {
     uint16_t *start = 0;
     phys_addr_t base = 0;
-    phys_addr_t rsdp = 0;
+    const struct acpi_rsdp2 *rsdp = NULL;
 
     /* EDBA start address. */
     start = (uint16_t*) phystokv(0x040e);
@@ -208,14 +209,36 @@ acpi_get_rsdp(int *is_64bit)
     /* check alignment. */
     if (acpi_check_rsdp_align((void *)base) == ACPI_BAD_ALIGN)
         return 0;
-    rsdp = acpi_search_rsdp((void *)base, 1024, is_64bit);
+    rsdp = acpi_search_rsdp((void *)base, 1024);
 
-    if (rsdp == 0) {
+    if (rsdp == NULL) {
         /* If RSDP isn't in EDBA, search in the BIOS read-only memory space between 0E0000h and 0FFFFFh */
-        rsdp = acpi_search_rsdp((void *)phystokv(0xe0000), 0x100000 - 0x0e0000, is_64bit);
+        rsdp = acpi_search_rsdp((void *)phystokv(0xe0000), 0x100000 - 0x0e0000);
     }
 
     return rsdp;
+}
+
+/*
+ * acpi_get_sdt_base:
+ *
+ * acpi_initialise() should be called before use.
+ * Returns the reference to RSDP structure if success, 0 if failure.
+ */
+static phys_addr_t
+acpi_get_sdt_base (int *is_64bit)
+{
+  phys_addr_t sdt_base = 0;
+
+  if (acpi_rsdp_verified != NULL)
+    {
+      *is_64bit = (acpi_rsdp_verified->v1.revision == 2);
+      sdt_base = (*is_64bit
+		  ? acpi_rsdp_verified->xsdt_addr
+		  : acpi_rsdp_verified->v1.rsdt_addr);
+    }
+
+  return sdt_base;
 }
 
 /*
@@ -585,7 +608,7 @@ acpi_apic_init(void)
     uint8_t checksum;
 
     /* Try to get the RSDP physical address. */
-    rsdp = acpi_get_rsdp(&is_64bit);
+    rsdp = acpi_get_sdt_base (&is_64bit);
     if (rsdp == 0)
         return ACPI_NO_RSDP;
 
@@ -650,4 +673,25 @@ acpi_apic_init(void)
     apic_print_info();
 
     return ACPI_SUCCESS;
+}
+
+void
+acpi_initialise (const struct multiboot2_raw_info *bi)
+{
+  const struct acpi_rsdp2 *rsdp;
+
+  rsdp = acpi_rsdp_from_bios ();
+
+  if (rsdp != NULL)
+    {
+      memcpy (&acpi_rsdp_store,
+	      rsdp,
+	      rsdp->v1.revision == 2
+	      ? sizeof (struct acpi_rsdp2)
+	      : sizeof (struct acpi_rsdp));
+
+      acpi_rsdp_verified = &acpi_rsdp_store;
+    }
+  else
+    acpi_rsdp_verified = NULL;
 }
