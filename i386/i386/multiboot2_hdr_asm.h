@@ -29,12 +29,14 @@ multiboot2_hdr:
 	  aligned with padding if required. */
 	.short MULTIBOOT2_HEADER_TAG_INFORMATION_REQUEST
 	.short 0
-	.long 32
+	.long 40
 	.long MULTIBOOT2_TAG_TYPE_MMAP
 	.long MULTIBOOT2_TAG_TYPE_BASIC_MEMINFO
 	.long MULTIBOOT2_TAG_TYPE_CMDLINE
 	.long MULTIBOOT2_TAG_TYPE_MODULE
 	.long MULTIBOOT2_TAG_TYPE_ELF_SECTIONS
+	.long MULTIBOOT2_TAG_TYPE_ACPI_OLD
+	.long MULTIBOOT2_TAG_TYPE_ACPI_NEW
 	.long  0 /* alignment */
 	/* Align modules on page boundaries */
 	.short MULTIBOOT2_HEADER_TAG_MODULE_ALIGN

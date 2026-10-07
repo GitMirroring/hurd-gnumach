@@ -24,6 +24,7 @@
 #include <stdint.h> /* uint16_t, uint32_t... */
 
 #include <mach/machine.h>   /* machine_slot */
+#include <mach/machine/multiboot2.h>
 
 #include <kern/printf.h>    /* printf */
 #include <kern/debug.h>
@@ -675,12 +676,72 @@ acpi_apic_init(void)
     return ACPI_SUCCESS;
 }
 
+static const struct acpi_rsdp2 *
+acpi_mb2_initialise (const struct multiboot2_raw_info *bi)
+{
+  const struct acpi_rsdp2 *rsdp = NULL;
+
+  assert (bi != NULL);
+
+  uint32_t tags_len = bi->total_size
+    - offsetof (struct multiboot2_raw_info, content);
+  uint32_t offset = 0;
+
+  while (offset < tags_len)
+    {
+      const struct multiboot2_tag *tag =
+	(const struct multiboot2_tag *)(&bi->content[offset]);
+
+      switch (tag->type)
+	{
+	case MULTIBOOT2_TAG_TYPE_ACPI_OLD:
+	  {
+	    if (rsdp == NULL)
+	      {
+		const struct multiboot2_tag_old_acpi *old_acpi =
+		  (const struct multiboot2_tag_old_acpi *)tag;
+
+		if ((old_acpi->size - offsetof (typeof (*old_acpi), rsdp))
+		    >= sizeof (struct acpi_rsdp))
+		  rsdp = (const struct acpi_rsdp2 *)old_acpi->rsdp;
+	      }
+	  }
+	  break;
+
+	case MULTIBOOT2_TAG_TYPE_ACPI_NEW:
+	  {
+	    const struct multiboot2_tag_new_acpi *new_acpi =
+	      (const struct multiboot2_tag_new_acpi *)tag;
+
+	    if ((new_acpi->size - offsetof (typeof (*new_acpi), rsdp))
+		>= sizeof (struct acpi_rsdp2))
+	      rsdp = (const struct acpi_rsdp2 *)new_acpi->rsdp;
+	  }
+	  break;
+
+	default:
+	  break;
+	}
+
+      offset += MULTIBOOT2_NEXT_TAG_OFFSET (tag->size);
+    }
+
+  if (rsdp != NULL && acpi_check_rsdp (rsdp) <= 0)
+    rsdp = NULL;
+
+  return rsdp;
+}
+
 void
 acpi_initialise (const struct multiboot2_raw_info *bi)
 {
-  const struct acpi_rsdp2 *rsdp;
+  const struct acpi_rsdp2 *rsdp = NULL;
 
-  rsdp = acpi_rsdp_from_bios ();
+  if (bi != NULL)
+    rsdp = acpi_mb2_initialise (bi);
+
+  if (rsdp == NULL)
+    rsdp = acpi_rsdp_from_bios ();
 
   if (rsdp != NULL)
     {
