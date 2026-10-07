@@ -214,7 +214,7 @@ apboot32:
 	movw	%ax, %gs
 
 	/* Load null Interrupt descriptor table */
-	mov	apboot_idt_ptr, %ebx
+	movl	$apboot_idt_ptr, %ebx
 	lidt	(%ebx)
 
 	/* Enable local apic in xAPIC mode */
