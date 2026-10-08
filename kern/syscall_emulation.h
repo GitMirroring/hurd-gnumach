@@ -38,7 +38,7 @@
 typedef	vm_offset_t	eml_routine_t;
 
 typedef struct eml_dispatch {
-	decl_simple_lock_data(, lock)	/* lock for reference count */
+	decl_simple_lock_data(, lock);	/* lock for reference count */
 	int		ref_count;	/* reference count */
 	int 		disp_count; 	/* count of entries in vector */
 	int		disp_min;	/* index of lowest entry in vector */

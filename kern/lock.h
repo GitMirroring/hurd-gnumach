@@ -97,7 +97,7 @@ typedef struct slock	*simple_lock_t;
  */
 
 #define	decl_simple_lock_data(class,name) \
-class	simple_lock_data_t	name;
+class	simple_lock_data_t	name
 #define	def_simple_lock_data(class,name) \
 class	simple_lock_data_t	name = SIMPLE_LOCK_INITIALIZER(&name);
 #define	def_simple_lock_irq_data(class,name) \
@@ -159,7 +159,7 @@ extern void		check_simple_locks_disable(void);
 struct simple_lock_data_empty { struct {} is_a_simple_lock; };
 struct simple_lock_irq_data_empty { struct simple_lock_data_empty slock; };
 #define	decl_simple_lock_data(class,name)	\
-class struct simple_lock_data_empty name;
+class struct simple_lock_data_empty name
 #define	def_simple_lock_data(class,name)	\
 class struct simple_lock_data_empty name;
 #define	def_simple_lock_irq_data(class,name)	\
@@ -222,7 +222,7 @@ struct lock {
 #if MACH_LDEBUG
 	struct thread	*writer;
 #endif	/* MACH_LDEBUG */
-	decl_simple_lock_data(,interlock)
+	decl_simple_lock_data(,interlock);
 					/* Hardware interlock field.
 					   Last in the structure so that
 					   field offsets are the same whether
@@ -293,7 +293,7 @@ typedef struct slock_irq	simple_lock_irq_data_t;
 typedef struct slock_irq	*simple_lock_irq_t;
 
 #define	decl_simple_lock_irq_data(class,name) \
-class	simple_lock_irq_data_t	name;
+class	simple_lock_irq_data_t	name
 
 #define simple_lock_init_irq(l) simple_lock_init(&(l)->slock)
 

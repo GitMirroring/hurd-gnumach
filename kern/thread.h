@@ -94,7 +94,7 @@ struct thread {
 	queue_chain_t	pset_threads;	/* list of all threads in proc set*/
 
 	/* Self-preservation */
-	decl_simple_lock_data(,lock)
+	decl_simple_lock_data(,lock);
 	int		ref_count;	/* number of references to me */
 
 	/* Hardware state */
@@ -172,7 +172,7 @@ struct thread {
 	   See ipc_kmsg_destroy() for more details.  */
 	struct ipc_kmsg_queue ith_messages; 
 
-	decl_simple_lock_data(, ith_lock_data)
+	decl_simple_lock_data(, ith_lock_data);
 	struct ipc_port *ith_self;	/* not a right, doesn't hold ref */
 	struct ipc_port *ith_sself;	/* a send right */
 	struct ipc_port *ith_exception;	/* a send right */

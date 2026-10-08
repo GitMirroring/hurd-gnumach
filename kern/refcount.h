@@ -36,7 +36,7 @@
 #include <kern/lock.h>
 
 struct RefCount {
-	decl_simple_lock_data(,lock)	/* lock for reference count */
+	decl_simple_lock_data(,lock);	/* lock for reference count */
 	int		ref_count;	/* number of references */
 };
 typedef struct RefCount RefCount;

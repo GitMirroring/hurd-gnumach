@@ -58,7 +58,7 @@
 
 struct task {
 	/* Synchronization/destruction information */
-	decl_simple_lock_data(,lock)	/* Task's lock */
+	decl_simple_lock_data(,lock);	/* Task's lock */
 	int		ref_count;	/* Number of references to me */
 
 	/* Flags */
@@ -91,7 +91,7 @@ struct task {
 	time_value64_t	creation_time; /* time stamp at creation */
 
 	/* IPC structures */
-	decl_simple_lock_data(, itk_lock_data)
+	decl_simple_lock_data(, itk_lock_data);
 	struct ipc_port *itk_self;	/* not a right, doesn't hold ref */
 	struct ipc_port *itk_sself;	/* a send right */
 	struct ipc_port *itk_exception;	/* a send right */

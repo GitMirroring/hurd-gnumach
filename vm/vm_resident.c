@@ -89,7 +89,7 @@ vm_offset_t virtual_space_end;
  *	or VP, table.]
  */
 typedef struct {
-	decl_simple_lock_data(,lock)
+	decl_simple_lock_data(,lock);
 	vm_page_t pages;
 } vm_page_bucket_t;
 

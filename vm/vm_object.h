@@ -63,7 +63,7 @@ typedef struct ipc_port *	pager_request_t;
 
 struct vm_object {
 	queue_head_t		memq;		/* Resident memory */
-	decl_simple_lock_data(,	Lock)		/* Synchronization */
+	decl_simple_lock_data(,	Lock);		/* Synchronization */
 #if	VM_OBJECT_DEBUG
 	thread_t		LockHolder;	/* Thread holding Lock */
 #endif	/* VM_OBJECT_DEBUG */

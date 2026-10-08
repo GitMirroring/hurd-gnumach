@@ -129,7 +129,7 @@ timeout_data_t	recompute_priorities_timer;
 #define NUMQUEUES	1031
 
 /* Shall be taken at splsched only */
-decl_simple_lock_data(static,	wait_lock[NUMQUEUES])	 /* Lock for... */
+decl_simple_lock_data(static,	wait_lock[NUMQUEUES]);	 /* Lock for... */
 queue_head_t		wait_queue[NUMQUEUES];
 
 #ifdef MACH_LDEBUG

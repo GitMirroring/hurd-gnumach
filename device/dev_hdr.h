@@ -80,9 +80,9 @@ typedef struct device *device_t;
  * or built when the device is opened.
  */
 struct mach_device {
-	decl_simple_lock_data(,ref_lock)/* lock for reference count */
+	decl_simple_lock_data(,ref_lock);/* lock for reference count */
 	int		ref_count;	/* reference count */
-	decl_simple_lock_data(, lock)	/* lock for rest of state */
+	decl_simple_lock_data(, lock);	/* lock for rest of state */
 	short		state;		/* state: */
 #define	DEV_STATE_INIT		0	/* not open  */
 #define	DEV_STATE_OPENING	1	/* being opened */

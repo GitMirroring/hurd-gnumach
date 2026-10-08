@@ -64,7 +64,7 @@
 
 struct run_queue {
 	queue_head_t		runq[NRQS];	/* one for each priority */
-	decl_simple_lock_data(,	lock)		/* one lock for all queues,
+	decl_simple_lock_data(,	lock);		/* one lock for all queues,
 						   shall be taken at splsched
 						   only */
 	int			low;		/* low queue value */

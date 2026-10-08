@@ -185,9 +185,9 @@ int	vm_page_laundry_count;	/* How many pages being laundered? */
 extern
 int	vm_page_external_laundry_count;	/* How many external pages being paged out? */
 
-decl_simple_lock_data(extern,vm_page_queue_lock)/* lock on active and inactive
+decl_simple_lock_data(extern,vm_page_queue_lock);/* lock on active and inactive
 						   page queues */
-decl_simple_lock_data(extern,vm_page_queue_free_lock)
+decl_simple_lock_data(extern,vm_page_queue_free_lock);
 						/* lock on free page queue */
 
 extern phys_addr_t	vm_page_fictitious_addr;

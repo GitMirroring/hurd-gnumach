@@ -25,7 +25,7 @@
 struct kmutex
 {
   unsigned int state;
-  decl_simple_lock_data (, lock)
+  decl_simple_lock_data (, lock);
 };
 
 /* Possible values for the mutex state. */

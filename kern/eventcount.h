@@ -44,7 +44,7 @@ typedef struct evc {
 	thread_t	waiting_thread;
 	natural_t	ev_id;
 	struct evc	*sanity;
-	decl_simple_lock_data(,	lock)
+	decl_simple_lock_data(,	lock);
 } *evc_t;
 
 extern	void	evc_init(evc_t ev),

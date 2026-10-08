@@ -73,7 +73,7 @@ ipc_marequest_index_t ipc_marequest_mask;
 		 ipc_marequest_mask)
 
 typedef struct ipc_marequest_bucket {
-	decl_simple_lock_data(, imarb_lock_data)
+	decl_simple_lock_data(, imarb_lock_data);
 	ipc_marequest_t imarb_head;
 } *ipc_marequest_bucket_t;
 

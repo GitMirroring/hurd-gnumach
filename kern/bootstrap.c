@@ -758,7 +758,7 @@ struct user_bootstrap_info
   struct multiboot_module *mod;
   char **argv;
   int done;
-  decl_simple_lock_data(,lock)
+  decl_simple_lock_data(,lock);
 };
 
 int

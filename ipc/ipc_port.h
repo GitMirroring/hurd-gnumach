@@ -155,7 +155,7 @@ typedef struct ipc_port_request {
  *	when it is taken.
  */
 
-decl_simple_lock_data(extern, ipc_port_multiple_lock_data)
+decl_simple_lock_data(extern, ipc_port_multiple_lock_data);
 
 #define	ipc_port_multiple_lock_init()					\
 		simple_lock_init(&ipc_port_multiple_lock_data)
@@ -172,7 +172,7 @@ decl_simple_lock_data(extern, ipc_port_multiple_lock_data)
  *	mach_port_names with port death.
  */
 
-decl_simple_lock_data(extern, ipc_port_timestamp_lock_data)
+decl_simple_lock_data(extern, ipc_port_timestamp_lock_data);
 extern ipc_port_timestamp_t ipc_port_timestamp_data;
 
 #define	ipc_port_timestamp_lock_init()					\

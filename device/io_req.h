@@ -81,7 +81,7 @@ struct io_req {
 	struct io_req *	io_rlink;	/* reverse link (for driver header) */
 	vm_map_copy_t	io_copy;	/* vm_map_copy obj. for this op. */
 	long		io_total;	/* total op size, for write */
-	decl_simple_lock_data(,io_req_lock)
+	decl_simple_lock_data(,io_req_lock);
 					/* Lock for this structure */
 	long            io_physrec;    /* mapping to the physical block
 					   number */

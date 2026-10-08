@@ -72,7 +72,7 @@ struct lock_info {
 	unsigned int	masked;
 	unsigned int	stack;
 	time_stamp_t	time;
-	decl_simple_lock_data(, *lock)
+	decl_simple_lock_data(, *lock);
 	vm_offset_t	caller;
 };
 
@@ -91,8 +91,7 @@ extern spl_t curr_ipl[];
 
 
 struct lock_info *
-locate_lock_info(lock)
-decl_simple_lock_data(, **lock)
+locate_lock_info(decl_simple_lock_data(, **lock))
 {
 	struct lock_info *li =  &(lock_info[HASH_LOCK(*lock)].info[0]);
 	int i;
@@ -112,8 +111,7 @@ decl_simple_lock_data(, **lock)
 }
 
 
-void simple_lock(lock)
-decl_simple_lock_data(, *lock)
+void simple_lock(decl_simple_lock_data(, *lock))
 {
 	struct lock_info *li = locate_lock_info(&lock);
 	int my_cpu = cpu_number();
@@ -131,8 +129,7 @@ decl_simple_lock_data(, *lock)
 	li->time = time_stamp - li->time;
 }
 
-int simple_lock_try(lock)
-decl_simple_lock_data(, *lock)
+int simple_lock_try(decl_simple_lock_data(, *lock))
 {
 	struct lock_info *li = locate_lock_info(&lock);
 	int my_cpu = cpu_number();
@@ -151,8 +148,7 @@ decl_simple_lock_data(, *lock)
 	}
 }
 
-void simple_unlock(lock)
-decl_simple_lock_data(, *lock)
+void simple_unlock(decl_simple_lock_data(, *lock))
 {
 	time_stamp_t stamp = time_stamp;
 	time_stamp_t *time = &locate_lock_info(&lock)->time;
@@ -292,7 +288,7 @@ static void print_lock_info(struct lock_info *li)
 
 void time_lock(int loops)
 {
-	decl_simple_lock_data(, lock)
+	decl_simple_lock_data(, lock);
 	time_stamp_t stamp;
 	int i;
 
@@ -328,8 +324,7 @@ void time_lock(int loops)
  */
 
 void
-retry_simple_lock(lock)
-decl_simple_lock_data(, *lock)
+retry_simple_lock(decl_simple_lock_data(, *lock))
 {
 	count = 0;
 

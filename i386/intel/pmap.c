@@ -388,7 +388,7 @@ typedef	struct pmap_update_item	*pmap_update_item_t;
  *	the last entry is changed to invalidate all.
  */
 struct pmap_update_list {
-	decl_simple_lock_data(,	lock)
+	decl_simple_lock_data(,	lock);
 	int			count;
 	struct pmap_update_item	item[UPDATE_LIST_SIZE];
 } ;

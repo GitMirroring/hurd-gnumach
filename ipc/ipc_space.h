@@ -61,7 +61,7 @@
 typedef unsigned int ipc_space_refs_t;
 
 struct ipc_space {
-	decl_simple_lock_data(,is_ref_lock_data)
+	decl_simple_lock_data(,is_ref_lock_data);
 	ipc_space_refs_t is_references;
 
 	struct lock is_lock_data;

@@ -232,7 +232,7 @@ typedef struct pcb {
 	struct i386_saved_state iss;
 	/* END of exception stack*/
 	struct i386_machine_state ims;
-	decl_simple_lock_data(, lock)
+	decl_simple_lock_data(, lock);
 	unsigned short init_control;		/* Initial FPU control to set */
 #ifdef LINUX_DEV
 	void *data;

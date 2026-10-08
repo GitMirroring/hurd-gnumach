@@ -186,9 +186,9 @@ struct vm_map {
 	vm_size_t		size_wired;	/* wired size */
 	vm_size_t		size_none;	/* none protection size */
 	int			ref_count;	/* Reference count */
-	decl_simple_lock_data(,	ref_lock)	/* Lock for ref_count field */
+	decl_simple_lock_data(,	ref_lock);	/* Lock for ref_count field */
 	vm_map_entry_t		hint;		/* hint for quick lookups */
-	decl_simple_lock_data(,	hint_lock)	/* lock for hint storage */
+	decl_simple_lock_data(,	hint_lock);	/* lock for hint storage */
 	vm_map_entry_t		first_free;	/* First free space hint */
 
 	/* Flags */

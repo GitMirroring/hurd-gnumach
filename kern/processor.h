@@ -55,7 +55,7 @@ struct processor_set {
 	struct run_queue	runq;		/* runq for this set */
 	queue_head_t		idle_queue;	/* idle processors */
 	int			idle_count;	/* how many ? */
-	decl_simple_lock_data(,	idle_lock)	/* lock for above, shall be taken at splsched only */
+	decl_simple_lock_data(,	idle_lock);	/* lock for above, shall be taken at splsched only */
 	queue_head_t		processors;	/* all processors here */
 	int			processor_count;	/* how many ? */
 	boolean_t		empty;		/* true if no processors */
@@ -64,10 +64,10 @@ struct processor_set {
 	queue_head_t		threads;	/* threads in this set */
 	int			thread_count;	/* how many */
 	int			ref_count;	/* structure ref count */
-	decl_simple_lock_data(,	ref_lock)	/* lock for ref count */
+	decl_simple_lock_data(,	ref_lock);	/* lock for ref count */
 	queue_chain_t		all_psets;	/* link for all_psets */
 	boolean_t		active;		/* is pset in use */
-	decl_simple_lock_data(,	lock)		/* lock for everything else */
+	decl_simple_lock_data(,	lock);		/* lock for everything else */
 	struct ipc_port	*	pset_self;	/* port for operations */
 	struct ipc_port *	pset_name_self;	/* port for information */
 	int			max_priority;	/* maximum priority */
@@ -77,7 +77,7 @@ struct processor_set {
 	int			set_quantum;	/* current default quantum */
 #if	NCPUS > 1
 	int			quantum_adj_index; /* runtime quantum adj. */
-	decl_simple_lock_irq_data(, quantum_adj_lock)  /* lock for above */
+	decl_simple_lock_irq_data(, quantum_adj_lock); /* lock for above */
 	int			machine_quantum[NCPUS+1]; /* ditto */
 #endif	/* NCPUS > 1 */
 	long			mach_factor;	/* mach_factor */
@@ -119,7 +119,7 @@ struct processor {
 	processor_set_t	processor_set;	/* processor set I belong to */
 	processor_set_t processor_set_next;	/* set I will belong to */
 	queue_chain_t	processors;	/* all processors in set */
-	decl_simple_lock_data(,	lock)
+	decl_simple_lock_data(,	lock);
 	struct ipc_port *processor_self;	/* port for operations */
 	struct ipc_port *processor_name_self;	/* unprivileged name port */
 	int		slot_num;	/* machine-indep slot number */

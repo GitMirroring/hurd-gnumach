@@ -46,7 +46,7 @@ typedef unsigned int ipc_object_bits_t;
 typedef unsigned int ipc_object_type_t;
 
 typedef struct ipc_object {
-	decl_simple_lock_data(,io_lock_data)
+	decl_simple_lock_data(,io_lock_data);
 	ipc_object_refs_t io_references;
 	ipc_object_bits_t io_bits;
 } *ipc_object_t;

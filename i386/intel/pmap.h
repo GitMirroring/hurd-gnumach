@@ -219,7 +219,7 @@ struct pmap {
 #endif	/* x86_64 */
 #endif	/* PAE */
 	int		ref_count;	/* reference count */
-	decl_simple_lock_data(,lock)
+	decl_simple_lock_data(,lock);
 					/* lock on map */
 	struct pmap_statistics	stats;	/* map statistics */
 	cpu_set		cpus_using;	/* bitmap of cpus using pmap */

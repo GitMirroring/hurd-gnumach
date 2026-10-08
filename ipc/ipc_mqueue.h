@@ -43,7 +43,7 @@
 #include <ipc/ipc_thread.h>
 
 typedef struct ipc_mqueue {
-	decl_simple_lock_data(, imq_lock_data)
+	decl_simple_lock_data(, imq_lock_data);
 	struct ipc_kmsg_queue imq_messages;
 	struct ipc_thread_queue imq_threads;
 } *ipc_mqueue_t;
