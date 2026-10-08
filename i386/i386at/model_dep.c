@@ -644,6 +644,23 @@ finalise_mb2_boot_info(const struct multiboot2_raw_info *mb2_info)
 	  }
 	  break;
 
+	case MULTIBOOT2_TAG_TYPE_FRAMEBUFFER:
+	  {
+	    const struct multiboot2_tag_framebuffer *fb_tag =
+	      (const struct multiboot2_tag_framebuffer *)tag;
+
+	    boot_info.fb_info.framebuffer_addr = fb_tag->common.framebuffer_addr;
+	    boot_info.fb_info.framebuffer_pitch = fb_tag->common.framebuffer_pitch;
+	    boot_info.fb_info.framebuffer_width = fb_tag->common.framebuffer_width;
+	    boot_info.fb_info.framebuffer_height = fb_tag->common.framebuffer_height;
+	    boot_info.fb_info.framebuffer_bpp = fb_tag->common.framebuffer_bpp;
+	    /* framebuffer_type values are the same in mb1 and mb2. */
+	    boot_info.fb_info.framebuffer_type = fb_tag->common.framebuffer_type;
+
+	    boot_info.flags |= MULTIBOOT_FRAMEBUFFER;
+	  }
+	  break;
+
 	default:
 	  break;
 	}

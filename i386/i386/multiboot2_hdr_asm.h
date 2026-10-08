@@ -40,6 +40,15 @@ multiboot2_hdr:
 	.short MULTIBOOT2_HEADER_TAG_MODULE_ALIGN
 	.short 0
 	.long  8
+	/* Frame buffer specified with no preference for width, height
+	   and depth. */
+	.short MULTIBOOT2_HEADER_TAG_FRAMEBUFFER
+	.short 0
+	.long  20
+	.long  0 /* No preference. */
+	.long  0 /* No preference. */
+	.long  0 /* No preference. */
+	.long  0 /* Padding */
 	/* There must always be an 'end' (empty) tag */
 	.short MULTIBOOT2_HEADER_TAG_END
 	.short 0
