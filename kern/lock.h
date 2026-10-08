@@ -266,7 +266,11 @@ extern unsigned long in_interrupt[NCPUS];
 #define have_lock(l)		(have_read_lock(l) || have_write_lock(l))
 
 /* These are defined elsewhere with lock monitoring */
-#if MACH_LOCK_MON == 0
+#if MACH_LOCK_MON == 1
+extern void simple_lock(struct slock *l);
+extern int simple_lock_try(struct slock *l);
+extern void simple_unlock(struct slock *l);
+#else
 #define simple_lock(l)		\
 MACRO_BEGIN \
 	lock_check_no_interrupts(); \
