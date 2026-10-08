@@ -69,6 +69,10 @@
 #define simple_lock_try_nocheck	simple_lock_try
 #define simple_unlock_nocheck	simple_unlock
 #endif
+#else
+#if MACH_LOCK_MON == 1
+#error "Lock monitoring only implemented for SMP"
+#endif
 #endif
 
 #define MACH_SLOCKS	((NCPUS > 1) || MACH_LDEBUG)
