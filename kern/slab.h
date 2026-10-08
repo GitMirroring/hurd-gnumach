@@ -163,7 +163,7 @@ struct kmem_cache {
 #endif /* SLAB_USE_CPU_POOLS */
 
     /* Slab layer */
-    simple_lock_data_t lock;
+    decl_simple_lock_data(, lock);
     struct list node;   /* Cache list linkage */
     struct list partial_slabs;
     struct list free_slabs;

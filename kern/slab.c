@@ -249,7 +249,7 @@ static struct kmem_cache kalloc_caches[KALLOC_NR_CACHES];
  */
 static struct list kmem_cache_list;
 static unsigned int kmem_nr_caches;
-static simple_lock_data_t __attribute__((used)) kmem_cache_list_lock;
+decl_simple_lock_data(static __attribute__((used)), kmem_cache_list_lock);
 
 /*
  * Time of the last memory reclaim, in clock ticks.
