@@ -60,11 +60,11 @@ typedef unsigned int time_stamp_t;
 /* in milliseconds */
 #define	time_stamp (elapsed_ticks * 1000 / hz)
 
-#define LOCK_INFO_MAX	     (1024*32)
-#define LOCK_INFO_HASH_COUNT 1024
-#define LOCK_INFO_PER_BUCKET	(LOCK_INFO_MAX/LOCK_INFO_HASH_COUNT)
-
-#define HASH_LOCK(lock)	((long)lock>>5 & (LOCK_INFO_HASH_COUNT-1))
+#define LOCK_INFO_HASH_COUNT	1024
+#define LOCK_INFO_BUCKET_BITS	5
+#define LOCK_INFO_PER_BUCKET	(1 << LOCK_INFO_BUCKET_BITS)
+#define LOCK_INFO_MAX		(LOCK_INFO_HASH_COUNT << LOCK_INFO_BUCKET_BITS)
+#define HASH_LOCK(lock)		(((long)lock >> LOCK_INFO_BUCKET_BITS) & (LOCK_INFO_HASH_COUNT-1))
 
 struct lock_info {
 	unsigned int	success;
