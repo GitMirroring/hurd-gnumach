@@ -37,7 +37,7 @@ multiboot2_hdr:
 	.long MULTIBOOT2_TAG_TYPE_ELF_SECTIONS
 	.long MULTIBOOT2_TAG_TYPE_ACPI_OLD
 	.long MULTIBOOT2_TAG_TYPE_ACPI_NEW
-	.long  0 /* alignment */
+	.long MULTIBOOT2_TAG_TYPE_EFI64
 	/* Align modules on page boundaries */
 	.short MULTIBOOT2_HEADER_TAG_MODULE_ALIGN
 	.short 0

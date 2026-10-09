@@ -45,6 +45,9 @@
 #include <kern/mach_host.server.h>
 #include <mach/vm_param.h>
 
+#ifdef __x86_64__
+uint64_t        host_efi_systab = HOST_NO_UEFI;
+#endif /* __x86_64__ */
 host_data_t	realhost;
 
 kern_return_t host_processors(
@@ -195,6 +198,17 @@ kern_return_t	host_info(
 		return KERN_SUCCESS;
 	    }
 
+#ifdef __x86_64__
+	case HOST_EFI_SYSTAB:
+	    {
+		if (*count < HOST_EFI_SYSTAB_COUNT)
+			return KERN_FAILURE;
+
+		*(host_efi_systab_t) info = host_efi_systab;
+		*count = HOST_EFI_SYSTAB_COUNT;
+		return KERN_SUCCESS;
+	    }
+#endif /* __x86_64__ */
 	default:
 		return KERN_INVALID_ARGUMENT;
 	}

@@ -45,4 +45,9 @@ typedef struct host	host_data_t;
 
 extern host_data_t	realhost;
 
+#ifdef __x86_64__
+/* The physical adddress of the UEFI System table. */
+extern uint64_t         host_efi_systab;
+#endif /* __x86_64__ */
+
 #endif	/* _KERN_HOST_H_ */

@@ -26,6 +26,10 @@
 #include <mach/machine.h>   /* machine_slot */
 #include <mach/machine/multiboot2.h>
 
+#ifdef __x86_64__
+#include <kern/host.h>
+#endif
+
 #include <kern/printf.h>    /* printf */
 #include <kern/debug.h>
 #include <i386/vm_param.h>  /* phystokv */
@@ -719,6 +723,11 @@ acpi_mb2_initialise (const struct multiboot2_raw_info *bi)
 	  }
 	  break;
 
+#ifdef __x86_64__
+	case MULTIBOOT2_TAG_TYPE_EFI64:
+	  host_efi_systab = ((const struct multiboot2_tag_efi64 *)tag)->pointer;
+	  break;
+#endif
 	default:
 	  break;
 	}

@@ -53,6 +53,9 @@ typedef char	kernel_version_t[KERNEL_VERSION_MAX];
 #define HOST_PROCESSOR_SLOTS	2	/* processor slot numbers */
 #define HOST_SCHED_INFO		3	/* scheduling info */
 #define	HOST_LOAD_INFO		4	/* avenrun/mach_factor info */
+#ifdef __x86_64__
+#define	HOST_EFI_SYSTAB		5	/* EFI System table. */
+#endif /* __x86_64__ */
 
 struct host_basic_info {
 	integer_t	max_cpus;	/* max number of cpus possible */
@@ -86,5 +89,17 @@ typedef struct host_load_info	host_load_info_data_t;
 typedef struct host_load_info	*host_load_info_t;
 #define	HOST_LOAD_INFO_COUNT \
 		(sizeof(host_load_info_data_t)/sizeof(integer_t))
+
+#ifdef __x86_64__
+typedef uint64_t host_efi_systab_data_t;
+typedef uint64_t *host_efi_systab_t;
+#define	HOST_EFI_SYSTAB_COUNT \
+		(sizeof(host_efi_systab_data_t)/sizeof(integer_t))
+
+/* This is the address returned for the EFI system table in the case
+   where UEFI is not available. */
+#define HOST_NO_UEFI (~0ULL)
+
+#endif /* __x86_64__ */
 
 #endif	/* _MACH_HOST_INFO_H_ */
