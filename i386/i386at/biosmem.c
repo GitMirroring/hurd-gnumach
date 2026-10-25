@@ -713,10 +713,8 @@ biosmem_bootstrap_common(void)
     phys_end = VM_PAGE_DMA32_LIMIT;
     error = biosmem_map_find_avail(&phys_start, &phys_end);
 
-    if (error)
-        return;
-
-    biosmem_set_segment(VM_PAGE_SEG_DMA32, phys_start, phys_end);
+    if (!error)
+      biosmem_set_segment(VM_PAGE_SEG_DMA32, phys_start, phys_end);
 
     phys_start = VM_PAGE_DMA32_LIMIT;
 #endif
@@ -725,10 +723,8 @@ biosmem_bootstrap_common(void)
     phys_end = VM_PAGE_DIRECTMAP_LIMIT;
     error = biosmem_map_find_avail(&phys_start, &phys_end);
 
-    if (error)
-        return;
-
-    biosmem_set_segment(VM_PAGE_SEG_DIRECTMAP, phys_start, phys_end);
+    if (!error)
+      biosmem_set_segment(VM_PAGE_SEG_DIRECTMAP, phys_start, phys_end);
 
     phys_start = VM_PAGE_DIRECTMAP_LIMIT;
 
@@ -737,10 +733,8 @@ biosmem_bootstrap_common(void)
     phys_end = VM_PAGE_DMA32_LIMIT;
     error = biosmem_map_find_avail(&phys_start, &phys_end);
 
-    if (error)
-        return;
-
-    biosmem_set_segment(VM_PAGE_SEG_DMA32, phys_start, phys_end);
+    if (!error)
+      biosmem_set_segment(VM_PAGE_SEG_DMA32, phys_start, phys_end);
 
     phys_start = VM_PAGE_DMA32_LIMIT;
 #endif
@@ -749,10 +743,8 @@ biosmem_bootstrap_common(void)
     phys_end = VM_PAGE_HIGHMEM_LIMIT;
     error = biosmem_map_find_avail(&phys_start, &phys_end);
 
-    if (error)
-        return;
-
-    biosmem_set_segment(VM_PAGE_SEG_HIGHMEM, phys_start, phys_end);
+    if (!error)
+      biosmem_set_segment(VM_PAGE_SEG_HIGHMEM, phys_start, phys_end);
 }
 
 #ifdef MACH_HYP
