@@ -262,7 +262,7 @@ vm_offset_t pmap_steal_memory(
 	addr = virtual_space_start;
 	vm_offset_t new_start = virtual_space_start + size;
 	if (new_start < virtual_space_start)
-		panic("not enough kernel virtual space for %dMB virtual allocation!\n", size >> 20);
+		panic("not enough kernel virtual space for %ldMB virtual allocation!\n", (long) size >> 20);
 	virtual_space_start = new_start;
 
 	/*
