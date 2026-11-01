@@ -1,5 +1,5 @@
 
-There are some basic tests that can be run qith qemu. You can run all the tests with
+There are some basic tests that can be run with qemu. You can run all the tests with
 
     $ make check
 
