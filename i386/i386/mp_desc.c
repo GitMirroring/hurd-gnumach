@@ -151,11 +151,15 @@ mp_desc_init(int mycpu)
 	}
 	else {
 		/*
-		 * Allocate tables for other CPUs
+		 * The BSP allocates AP tables after VM initialization, before
+		 * starting the APs.  The boot allocator no longer owns these
+		 * pages and must not be used here.
 		 */
-		if (!init_alloc_aligned(sizeof(struct mp_desc_table), &mem))
+		if (kmem_alloc_wired(kernel_map, &mem,
+				     round_page(sizeof(struct mp_desc_table)))
+		    != KERN_SUCCESS)
 			panic("not enough memory for descriptor tables");
-		mpt = (struct mp_desc_table *)phystokv(mem);
+		mpt = (struct mp_desc_table *)mem;
 
 		mp_desc_table[mycpu] = mpt;
 		mp_ktss[mycpu] = &mpt->ktss;
@@ -236,8 +240,7 @@ cpu_setup(int cpu)
     printf("AP=(%u) paging done\n", cpu);
 
     init_percpu(cpu);
-    mp_desc_init(cpu);
-    printf("AP=(%u) mpdesc done\n", cpu);
+    assert(mp_desc_table[cpu] != NULL);
 
     ap_gdt_init(cpu);
     printf("AP=(%u) gdt done\n", cpu);
@@ -282,6 +285,10 @@ start_other_cpus(void)
 
 	if (ncpus == 1)
 	  return;
+
+	/* Allocate while the BSP can use the VM allocator and before APs run. */
+	for (int cpu = 1; cpu < ncpus; cpu++)
+		mp_desc_init(cpu);
 
 	//Copy cpu initialization assembly routine
 #ifdef __i386__

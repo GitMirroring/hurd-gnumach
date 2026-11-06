@@ -75,7 +75,7 @@ extern struct real_descriptor	*mp_gdt[NCPUS];
 extern uint8_t solid_intstack[];
 
 /*
- * Each CPU calls this routine to set up its descriptor tables.
+ * The BSP calls this routine to set up each CPU's descriptor tables.
  */
 extern int mp_desc_init(int);
 
