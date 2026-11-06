@@ -85,7 +85,7 @@ wait_for_ipi(void)
 }
 
 static int
-smp_send_ipi_init(int bsp_apic_id)
+smp_send_ipi_init(int apic_id)
 {
     int err;
 
@@ -94,9 +94,10 @@ smp_send_ipi_init(int bsp_apic_id)
 
     /* Assert INIT IPI:
      *
-     * This is EDGE triggered to match the deassert
+     * This is EDGE triggered to match the deassert, and is targeted at one
+     * AP by its APIC ID rather than broadcast.
      */
-    apic_send_ipi(ALL_EXCLUDING_SELF, INIT, PHYSICAL, ASSERT, EDGE, 0, bsp_apic_id);
+    apic_send_ipi(NO_SHORTHAND, INIT, PHYSICAL, ASSERT, EDGE, 0, apic_id);
 
     /* Wait for delivery */
     wait_for_ipi();
@@ -108,7 +109,7 @@ smp_send_ipi_init(int bsp_apic_id)
      * that does not support STARTUP IPIs at all, and instead jump
      * via a warm reset vector.
      */
-    apic_send_ipi(ALL_EXCLUDING_SELF, INIT, PHYSICAL, DE_ASSERT, EDGE, 0, bsp_apic_id);
+    apic_send_ipi(NO_SHORTHAND, INIT, PHYSICAL, DE_ASSERT, EDGE, 0, apic_id);
 
     /* Wait for delivery */
     wait_for_ipi();
@@ -121,7 +122,7 @@ smp_send_ipi_init(int bsp_apic_id)
 }
 
 static int
-smp_send_ipi_startup_twice(int bsp_apic_id, int vector)
+smp_send_ipi_startup_twice(int apic_id, int vector)
 {
     int i, accept_err, send_err;
     volatile int err;
@@ -137,7 +138,7 @@ smp_send_ipi_startup_twice(int bsp_apic_id, int vector)
          * Have not seen any documentation for trigger mode for this IPI
          * but it seems to work with EDGE.  (AMD BKDG FAM16h document specifies dont care)
          */
-        apic_send_ipi(ALL_EXCLUDING_SELF, STARTUP, PHYSICAL, DE_ASSERT, EDGE, vector, bsp_apic_id);
+        apic_send_ipi(NO_SHORTHAND, STARTUP, PHYSICAL, ASSERT, EDGE, vector, apic_id);
 
         pit_udelay(10);
 
@@ -166,6 +167,8 @@ smp_send_ipi_startup_twice(int bsp_apic_id, int vector)
 int smp_startup_cpus(unsigned bsp_apic_id, phys_addr_t start_eip)
 {
     int err;
+    uint8_t ncpus;
+    int cpu;
 #if 0
     /* This block goes with a legacy method of INIT that only works with
      * old hardware that does not support SIPIs.
@@ -190,12 +193,21 @@ int smp_startup_cpus(unsigned bsp_apic_id, phys_addr_t start_eip)
 
     printf("Sending IPIs from BSP APIC ID %u...\n", bsp_apic_id);
 
-    smp_send_ipi_init(bsp_apic_id);
-    err = smp_send_ipi_startup_twice(bsp_apic_id, start_eip >> STARTUP_VECTOR_SHIFT);
-    if (err) {
-        printf("FATAL: APs failed to start\n");
-        while(1) {
-            cpu_pause();
+    /* Target each AP from the MADT individually.  The previous broadcast
+     * "all excluding self" shorthand is rejected by some hypervisors
+     * (bhyve) and is not the documented per-AP INIT/SIPI sequence. */
+    ncpus = apic_get_numcpus();
+    for (cpu = 0; cpu < ncpus; cpu++) {
+        int apic_id = apic_get_cpu_apic_id(cpu);
+        if (apic_id < 0 || apic_id == (int)bsp_apic_id)
+            continue;
+        smp_send_ipi_init(apic_id);
+        err = smp_send_ipi_startup_twice(apic_id, start_eip >> STARTUP_VECTOR_SHIFT);
+        if (err) {
+            printf("FATAL: AP %d failed to start\n", cpu);
+            while(1) {
+                cpu_pause();
+            }
         }
     }
     printf("done\n");
