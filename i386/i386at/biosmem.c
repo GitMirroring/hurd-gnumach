@@ -626,7 +626,7 @@ biosmem_find_avail(phys_addr_t start, phys_addr_t end,
 #ifndef MACH_HYP
 
 static void __boot
-biosmem_setup_allocator(const uint32_t mem_upper)
+biosmem_setup_allocator(void)
 {
     phys_addr_t heap_start, heap_end, max_heap_start, max_heap_end;
     phys_addr_t start, end;
@@ -636,14 +636,10 @@ biosmem_setup_allocator(const uint32_t mem_upper)
      * Find some memory for the heap. Look for the largest unused area in
      * upper memory, carefully avoiding all boot data.
      */
-    end = vm_page_trunc((mem_upper + 1024) << 10);
-
-    if (end > VM_PAGE_DIRECTMAP_LIMIT)
-        end = VM_PAGE_DIRECTMAP_LIMIT;
-
     max_heap_start = 0;
     max_heap_end = 0;
     start = BIOSMEM_END;
+    end = VM_PAGE_DIRECTMAP_LIMIT;
 
     for (;;) {
         error = biosmem_find_avail(start, end, &heap_start, &heap_end);
@@ -803,7 +799,7 @@ biosmem_mb1_bootstrap(const struct multiboot_raw_info *mbi)
         biosmem_map_build_simple(mbi->mem_lower, mbi->mem_upper);
 
     biosmem_bootstrap_common();
-    biosmem_setup_allocator(mbi->mem_upper);
+    biosmem_setup_allocator();
 }
 
 void __boot
@@ -878,7 +874,7 @@ biosmem_mb2_bootstrap(const struct multiboot2_raw_info* mbi)
     biosmem_map_build_simple(bi_tag->mem_lower, bi_tag->mem_upper);
 
   biosmem_bootstrap_common();
-  biosmem_setup_allocator(bi_tag->mem_upper);
+  biosmem_setup_allocator();
 }
 
 #endif /* MACH_HYP */
